@@ -159,7 +159,7 @@ CREATE TABLE customers (
 
 MIT License - feel free to use this project for learning or commercial purposes.
 
-#supabase.sql1
+## supabase.sql1
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -308,7 +308,7 @@ CREATE TRIGGER handle_updated_at
 
 
 
-#supabase.sql2
+## supabase.sql2
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Users can view their own customers" ON customers;
 DROP POLICY IF EXISTS "Users can insert their own customers" ON customers;
