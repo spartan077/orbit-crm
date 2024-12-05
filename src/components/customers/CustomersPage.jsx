@@ -1,102 +1,99 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { CustomerFilters } from './CustomerFilters';
 import { CustomerTable } from './CustomerTable';
 import { AddCustomerModal } from './AddCustomerModal';
-
-const initialCustomers = [
-  {
-    id: 1,
-    name: 'Alice Freeman',
-    email: 'alice@example.com',
-    status: 'active',
-    spent: 1200,
-    lastOrder: '2023-12-20',
-    avatar: 'https://cdn.usegalileo.ai/stability/117a7a12-7704-4917-9139-4a3f76c42e78.png'
-  },
-  {
-    id: 2,
-    name: 'Bob Smith',
-    email: 'bob@example.com',
-    status: 'inactive',
-    spent: 800,
-    lastOrder: '2023-12-15',
-    avatar: 'https://cdn.usegalileo.ai/stability/d4e7d763-28f3-4af2-bc57-a26db12c522b.png'
-  },
-  {
-    id: 3,
-    name: 'Charlie Brown',
-    email: 'charlie@example.com',
-    status: 'active',
-    spent: 2500,
-    lastOrder: '2023-12-18',
-    avatar: 'https://cdn.usegalileo.ai/stability/e9fdb59b-64bb-4239-8e52-f71e0cfb538e.png'
-  },
-  {
-    id: 4,
-    name: 'David Jones',
-    email: 'david@example.com',
-    status: 'active',
-    spent: 3200,
-    lastOrder: '2023-12-19',
-    avatar: 'https://cdn.usegalileo.ai/stability/1af7ccee-eb75-4af5-b80e-ee2ec64a79ef.png'
-  }
-];
+import { CustomersService } from '../../services/customers';
+import toast from 'react-hot-toast';
 
 export function CustomersPage() {
-  const [customers, setCustomers] = useState(initialCustomers);
+  const [customers, setCustomers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
-    sortBy: 'name'
+    sortBy: 'name',
+    sortOrder: 'asc'
   });
 
-  const handleAddCustomer = (newCustomer) => {
-    setCustomers([...customers, newCustomer]);
+  const loadCustomers = async () => {
+    try {
+      setIsLoading(true);
+      const data = await CustomersService.getCustomers(filters);
+      setCustomers(data);
+    } catch (error) {
+      toast.error('Failed to load customers');
+      console.error('Error loading customers:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const filteredCustomers = customers.filter(customer => {
-    if (filters.status !== 'all' && customer.status !== filters.status) {
-      return false;
+  useEffect(() => {
+    loadCustomers();
+  }, [filters]);
+
+  const handleAddCustomer = async (customerData) => {
+    try {
+      const newCustomer = await CustomersService.createCustomer(customerData);
+      setCustomers(prev => [...prev, newCustomer]);
+      setIsAddModalOpen(false);
+      toast.success('Customer added successfully');
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      toast.error('Failed to add customer');
     }
-    if (filters.search) {
-      const search = filters.search.toLowerCase();
-      return (
-        customer.name.toLowerCase().includes(search) ||
-        customer.email.toLowerCase().includes(search)
-      );
+  };
+
+  const handleUpdateCustomer = async (id, data) => {
+    try {
+      await CustomersService.updateCustomer(id, data);
+      toast.success('Customer updated successfully');
+      loadCustomers();
+    } catch (error) {
+      toast.error('Failed to update customer');
+      console.error('Error updating customer:', error);
     }
-    return true;
-  }).sort((a, b) => {
-    switch (filters.sortBy) {
-      case 'spent':
-        return b.spent - a.spent;
-      case 'lastOrder':
-        return new Date(b.lastOrder) - new Date(a.lastOrder);
-      default:
-        return a.name.localeCompare(b.name);
+  };
+
+  const handleDeleteCustomer = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this customer?')) return;
+    
+    try {
+      await CustomersService.deleteCustomer(id);
+      toast.success('Customer deleted successfully');
+      loadCustomers();
+    } catch (error) {
+      toast.error('Failed to delete customer');
+      console.error('Error deleting customer:', error);
     }
-  });
+  };
 
   return (
     <main className="flex-1 min-w-0 overflow-auto">
       <div className="max-w-[1440px] mx-auto animate-fade-in">
         <div className="flex flex-wrap items-center justify-between gap-4 p-4">
           <h1 className="text-gray-900 dark:text-white text-2xl md:text-3xl font-bold">Customers</h1>
-          <Button onClick={() => setIsAddModalOpen(true)}>
-            Add Customer
-          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)}>Add Customer</Button>
         </div>
 
         <div className="p-4">
           <Card>
             <CardHeader>
-              <CustomerFilters filters={filters} onChange={setFilters} />
+              <CustomerFilters 
+                filters={filters} 
+                onChange={setFilters}
+              />
             </CardHeader>
             <CardContent>
-              <CustomerTable customers={filteredCustomers} />
+              <CustomerTable 
+                customers={customers}
+                isLoading={isLoading}
+                onUpdate={handleUpdateCustomer}
+                onDelete={handleDeleteCustomer}
+              />
             </CardContent>
           </Card>
         </div>

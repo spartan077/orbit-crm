@@ -1,85 +1,152 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Header } from './components/ui/Header';
-import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { LoginPage } from './components/auth/LoginPage';
 import { CustomersPage } from './components/customers/CustomersPage';
 import { ConversationsPage } from './components/conversations/ConversationsPage';
 import { CampaignsPage } from './components/campaigns/CampaignsPage';
 import { ReportingPage } from './components/reporting/ReportingPage';
 import { ProfilePage } from './components/profile/ProfilePage';
 import { SettingsPage } from './components/settings/SettingsPage';
+import { Header } from './components/ui/Header';
 import { MobileMenu } from './components/ui/MobileMenu';
+import Sidebar from './components/Sidebar';
+import { Dashboard } from './components/Dashboard';
 
-/**
- * Main application component that handles routing and layout.
- * Manages the sidebar state and current page navigation.
- */
-export default function App() {
-  // State for mobile sidebar visibility
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  // Current active page/route
-  const [currentPage, setCurrentPage] = useState('dashboard');
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
 
-  /**
-   * Handles navigation between pages and closes mobile sidebar
-   * @param {string} page - The page identifier to navigate to
-   */
-  const handleMenuItemClick = (page) => {
-    setCurrentPage(page);
-    setIsSidebarOpen(false);
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
-  /**
-   * Renders the appropriate page component based on current route
-   * @returns {React.ReactNode} The page component to render
-   */
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'customers':
-        return <CustomersPage />;
-      case 'conversations':
-        return <ConversationsPage />;
-      case 'campaigns':
-        return <CampaignsPage />;
-      case 'reporting':
-        return <ReportingPage />;
-      case 'profile':
-        return <ProfilePage />;
-      case 'settings':
-        return <SettingsPage />;
-      default:
-        return <Dashboard />;
-    }
-  };
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return children;
+}
+
+function AppRoutes() {
+  const { user } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg dark:text-gray-100 transition-colors duration-200">
-      <Header 
-        onMenuClick={() => setIsSidebarOpen(true)} 
-        onNavigate={setCurrentPage}
-      />
-      <div className="max-w-[1440px] mx-auto">
-        <div className="flex">
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            onClose={() => setIsSidebarOpen(false)}
-            currentPage={currentPage}
-            onMenuItemClick={handleMenuItemClick}
-          />
-          {renderPage()}
-        </div>
-      </div>
-      <MobileMenu 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)}
-        currentPage={currentPage}
-        onNavigate={handleMenuItemClick}
-      />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {user && <Header onMenuClick={() => setIsMobileMenuOpen(true)} />}
+      <Routes>
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to="/" /> : <LoginPage />} 
+        />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <Dashboard />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <CustomersPage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/conversations"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <ConversationsPage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/campaigns"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <CampaignsPage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reporting"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <ReportingPage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <ProfilePage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 p-6 text-gray-900 dark:text-white">
+                  <SettingsPage />
+                </main>
+              </div>
+            </PrivateRoute>
+          }
+        />
+      </Routes>
+      {user && <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />}
       <Toaster position="top-right" />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
   );
 }

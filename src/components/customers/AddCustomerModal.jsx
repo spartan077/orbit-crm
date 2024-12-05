@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
 import toast from 'react-hot-toast';
 
 export function AddCustomerModal({ isOpen, onClose, onAdd }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    status: 'active',
-    avatar: 'https://cdn.usegalileo.ai/stability/117a7a12-7704-4917-9139-4a3f76c42e78.png'
+    status: 'active'
   });
 
   const handleSubmit = (e) => {
@@ -21,13 +21,9 @@ export function AddCustomerModal({ isOpen, onClose, onAdd }) {
 
     onAdd({
       ...formData,
-      id: Date.now(),
       spent: 0,
       lastOrder: new Date().toISOString().split('T')[0]
     });
-    
-    toast.success('Customer added successfully');
-    onClose();
   };
 
   return (
@@ -101,20 +97,13 @@ export function AddCustomerModal({ isOpen, onClose, onAdd }) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-gray-800">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-dark-hover rounded-lg transition-colors"
-                >
+              <div className="flex justify-end gap-3 p-6 border-t border-gray-100 dark:border-gray-800">
+                <Button variant="secondary" type="button" onClick={onClose}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-light rounded-lg transition-colors"
-                >
+                </Button>
+                <Button type="submit">
                   Add Customer
-                </button>
+                </Button>
               </div>
             </form>
           </Card>
